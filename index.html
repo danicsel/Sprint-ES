@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint-Lebenszyklus</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { overflow: hidden; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: #172B4D;
+    background: #fff;
+    padding: 24px;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+
+  /* ── Page header ── */
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-size: 24px; font-weight: 600; color: #172B4D; margin-bottom: 6px; }
+  .page-meta { font-size: 13px; color: #626F86; }
+
+  /* ── Sprint timeline grid ── */
+  .timeline-wrap { margin-bottom: 20px; }
+  .timeline-label { font-size: 11px; font-weight: 600; color: #626F86; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .timeline-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .day-cell {
+    border-radius: 6px;
+    padding: 8px 5px 7px;
+    text-align: center;
+    cursor: default;
+  }
+  .day-name { font-size: 10px; font-weight: 700; margin-bottom: 4px; letter-spacing: 0.3px; }
+  .day-events { font-size: 9.5px; line-height: 1.4; }
+
+  /* ── Legend ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-bottom: 28px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #44546F; }
+  .legend-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── Tab navigation ── */
+  .tab-nav { display: flex; gap: 0; margin-bottom: 0; border-bottom: 2px solid #DCDFE4; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 9px 18px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    background: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #626F86;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: #0055CC; }
+  .tab-btn.active { color: #0055CC; border-bottom-color: #0055CC; }
+
+  /* ── Ceremony panels ── */
+  .ceremony-panel { display: none; padding: 24px 0 0; }
+  .ceremony-panel.active { display: block; }
+
+  .ceremony-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; }
+  .ceremony-icon {
+    width: 40px; height: 40px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .ceremony-title { font-size: 18px; font-weight: 600; color: #172B4D; margin-bottom: 3px; }
+  .ceremony-subtitle { font-size: 13px; color: #626F86; }
+
+  /* ── Two-column layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  /* ── Info blocks ── */
+  .info-block {
+    background: #F7F8F9;
+    border: 1px solid #DCDFE4;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .info-block-title {
+    font-size: 11px; font-weight: 700; color: #626F86;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 11px;
+  }
+
+  /* ── Role rows ── */
+  .role-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 7px; }
+  .role-row:last-child { margin-bottom: 0; }
+  .role-badge {
+    font-size: 11px; font-weight: 600;
+    padding: 2px 9px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .role-desc { font-size: 13px; color: #44546F; }
+
+  /* ── Timeline steps ── */
+  .flow-steps { display: flex; flex-direction: column; }
+  .flow-step { display: flex; gap: 10px; }
+  .flow-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .flow-dot { width: 9px; height: 9px; border-radius: 50%; background: #0055CC; flex-shrink: 0; margin-top: 4px; }
+  .flow-connector { width: 1px; flex: 1; background: #DCDFE4; min-height: 10px; margin: 3px 0; }
+  .flow-content { padding-bottom: 13px; flex: 1; min-width: 0; }
+  .flow-tag { font-size: 11px; color: #626F86; font-weight: 600; margin-bottom: 2px; }
+  .flow-text { font-size: 13px; color: #172B4D; }
+
+  /* ── Checklists ── */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 6px 0;
+    border-bottom: 1px solid #EBECF0;
+    font-size: 13px; color: #172B4D;
+  }
+  .checklist li:last-child { border-bottom: none; padding-bottom: 0; }
+  .check-sym { flex-shrink: 0; margin-top: 1px; font-size: 14px; line-height: 1; }
+  .check-sym.open  { color: #BFCBD9; }
+  .check-sym.done  { color: #22A06B; }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid #EBECF0; margin: 16px 0; }
+
+  /* ── DoR / DoD ── */
+  .dor-dod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .dor-block { border-radius: 8px; padding: 16px; }
+  .dor-block.dor { background: #E9F2FF; border: 1px solid #B3D4FF; }
+  .dor-block.dod { background: #DCFFF1; border: 1px solid #ABF5D1; }
+  .dor-block-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .dor-block.dor .dor-block-title { color: #0055CC; }
+  .dor-block.dod .dor-block-title { color: #216E4E; }
+  .dor-block p.sub { font-size: 11px; margin-bottom: 10px; }
+  .dor-block.dor p.sub { color: #0055CC; }
+  .dor-block.dod p.sub { color: #216E4E; }
+  .dor-list { list-style: none; }
+  .dor-list li { font-size: 12px; padding: 3px 0 3px 14px; position: relative; }
+  .dor-block.dor .dor-list li { color: #0055CC; }
+  .dor-block.dod .dor-list li { color: #216E4E; }
+  .dor-list li::before { content: '–'; position: absolute; left: 0; }
+
+  /* ── Output block ── */
+  .output-block {
+    background: #fff;
+    border: 1px solid #DCDFE4;
+    border-left: 4px solid #22A06B;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 16px;
+    margin-top: 14px;
+  }
+  .output-block .info-block-title { color: #216E4E; }
+
+  /* ── Notes ── */
+  .note-block {
+    background: #FFFAE6;
+    border: 1px solid #F5CD47;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #7F5F01;
+    margin-top: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">Sprint-Lebenszyklus &amp; Zeremonien</div>
+  <div class="page-meta">2-Wochen-Sprint &nbsp;·&nbsp; Refinement jeden Donnerstag &nbsp;·&nbsp; Planning mittwochs &nbsp;·&nbsp; Review dienstags &nbsp;·&nbsp; Shared Daily: Di &amp; Do</div>
+</div>
+
+<!-- Timeline -->
+<div class="timeline-wrap">
+  <div class="timeline-label">Sprint-Kalender — 2 Wochen</div>
+  <div class="timeline-grid">
+    <div class="day-cell" style="background:#F1F2F4;">
+      <div class="day-name" style="color:#44546F;">Mo W1</div>
+      <div class="day-events" style="color:#44546F;">—</div>
+    </div>
+    <div class="day-cell" style="background:#E9F2FF;">
+      <div class="day-name" style="color:#0055CC;">Di W1</div>
+      <div class="day-events" style="color:#0055CC;">Shared Daily</div>
+    </div>
+    <div class="day-cell" style="background:#F1F2F4;">
+      <div class="day-name" style="color:#44546F;">Mi W1</div>
+      <div class="day-events" style="color:#44546F;">Dev Daily</div>
+    </div>
+    <div class="day-cell" style="background:#DEEBFF;">
+      <div class="day-name" style="color:#0747A6;">Do W1</div>
+      <div class="day-events" style="color:#0747A6;">Shared Daily<br>Refinement</div>
+    </div>
+    <div class="day-cell" style="background:#F1F2F4;">
+      <div class="day-name" style="color:#44546F;">Fr W1</div>
+      <div class="day-events" style="color:#44546F;">Dev Daily</div>
+    </div>
+    <div class="day-cell" style="background:#F1F2F4;">
+      <div class="day-name" style="color:#44546F;">Mo W2</div>
+      <div class="day-events" style="color:#44546F;">—</div>
+    </div>
+    <div class="day-cell" style="background:#FFF0B3;">
+      <div class="day-name" style="color:#7F5F01;">Di W2</div>
+      <div class="day-events" style="color:#7F5F01;">Review<br>Retro<br>Shared Daily</div>
+    </div>
+    <div class="day-cell" style="background:#E3FCEF;">
+      <div class="day-name" style="color:#216E4E;">Mi W2</div>
+      <div class="day-events" style="color:#216E4E;">Planning</div>
+    </div>
+    <div class="day-cell" style="background:#DEEBFF;">
+      <div class="day-name" style="color:#0747A6;">Do W2</div>
+      <div class="day-events" style="color:#0747A6;">Shared Daily<br>Refinement</div>
+    </div>
+    <div class="day-cell" style="background:#F1F2F4;">
+      <div class="day-name" style="color:#44546F;">Fr W2</div>
+      <div class="day-events" style="color:#44546F;">Dev Daily</div>
+    </div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#0055CC;"></div>Refinement / Shared Daily</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#216E4E;"></div>Sprint Planning</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7F5F01;"></div>Review &amp; Retro</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#BFCBD9;"></div>Dev Daily (nur Entwicklungsteam)</div>
+</div>
+
+<!-- Tab navigation -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('refinement', this)">Refinement</button>
+  <button class="tab-btn" onclick="showTab('planning', this)">Sprint Planning</button>
+  <button class="tab-btn" onclick="showTab('daily', this)">Daily Standup</button>
+  <button class="tab-btn" onclick="showTab('review', this)">Sprint Review</button>
+  <button class="tab-btn" onclick="showTab('retro', this)">Retrospektive</button>
+  <button class="tab-btn" onclick="showTab('dor-dod', this)">DoR / DoD</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ REFINEMENT ═══ -->
+<div class="ceremony-panel active" id="panel-refinement">
+  <div class="ceremony-header">
+    <div class="ceremony-icon" style="background:#E9F2FF; font-size:20px;">🔍</div>
+    <div>
+      <div class="ceremony-title">Backlog-Refinement</div>
+      <div class="ceremony-subtitle">Jeden Donnerstag &nbsp;·&nbsp; ~60 Min &nbsp;·&nbsp; Woche 1 bereitet Planning in Woche 2 vor</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-block">
+      <div class="info-block-title">Teilnehmer</div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E9F2FF; color:#0055CC;">APPM</span>
+        <span class="role-desc">Führt durch, priorisiert, erklärt Anforderungen</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E3FCEF; color:#216E4E;">Dev Lead</span>
+        <span class="role-desc">Technische Einschätzung, Aufwand</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#EAE6FF; color:#403294;">Entwicklungsteam</span>
+        <span class="role-desc">Schätzung, Rückfragen, Akzeptanzkriterien</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#FFF0B3; color:#7F5F01;">Service Center</span>
+        <span class="role-desc">Optional — bei nutzerseitigen Themen</span>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="info-block-title">Zeitplan (60 Min)</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">0–10 Min</div><div class="flow-text">APPM stellt Kandidaten-Tickets aus dem Backlog vor</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">10–35 Min</div><div class="flow-text">Team klärt offene Fragen, ergänzt Akzeptanzkriterien</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">35–50 Min</div><div class="flow-text">Story-Point-Schätzung (Planning Poker / T-Shirt-Größen)</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div></div>
+          <div class="flow-content"><div class="flow-tag">50–60 Min</div><div class="flow-text">DoR-Prüfung — Tickets sind bereit oder werden zurückgestellt</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-block" style="margin-bottom:14px;">
+    <div class="info-block-title">Checkliste — APPM bereitet vor (bis Mittwochabend)</div>
+    <ul class="checklist">
+      <li><span class="check-sym open">☐</span>Tickets im Backlog nach Priorität geordnet</li>
+      <li><span class="check-sym open">☐</span>Jedes Ticket hat Titel, Beschreibung und einen ersten Entwurf der Akzeptanzkriterien</li>
+      <li><span class="check-sym open">☐</span>Abhängigkeiten identifiziert und in Jira verknüpft</li>
+      <li><span class="check-sym open">☐</span>Designs / Mockups angehängt oder verlinkt</li>
+      <li><span class="check-sym open">☐</span>Blockierte Tickets im Voraus markiert — nicht refinieren, bis Blockade gelöst</li>
+    </ul>
+  </div>
+
+  <div class="output-block">
+    <div class="info-block-title">Ergebnis — ein Ticket ist refined, wenn …</div>
+    <ul class="checklist">
+      <li><span class="check-sym done">✓</span>Akzeptanzkriterien abgestimmt und im Ticket dokumentiert</li>
+      <li><span class="check-sym done">✓</span>Story Points vergeben</li>
+      <li><span class="check-sym done">✓</span>Keine offenen Fragen seitens des Entwicklungsteams</li>
+      <li><span class="check-sym done">✓</span>Label „Ready" in Jira gesetzt</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PLANNING ═══ -->
+<div class="ceremony-panel" id="panel-planning">
+  <div class="ceremony-header">
+    <div class="ceremony-icon" style="background:#E3FCEF; font-size:20px;">📅</div>
+    <div>
+      <div class="ceremony-title">Sprint Planning</div>
+      <div class="ceremony-subtitle">Jeden zweiten Mittwoch &nbsp;·&nbsp; ~2 Std &nbsp;·&nbsp; Startet den neuen Sprint</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-block">
+      <div class="info-block-title">Teilnehmer</div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E9F2FF; color:#0055CC;">APPM</span>
+        <span class="role-desc">Legt Sprint-Ziel fest, zieht Tickets</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E3FCEF; color:#216E4E;">Dev Lead</span>
+        <span class="role-desc">Bestätigt Kapazität, verteilt Aufgaben</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#EAE6FF; color:#403294;">Entwicklungsteam</span>
+        <span class="role-desc">Committet zum Umfang</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#FFEBE6; color:#AE2A19;">Scrum Master</span>
+        <span class="role-desc">Moderiert</span>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="info-block-title">Zeitplan (120 Min)</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">0–15 Min</div><div class="flow-text">Rückblick: Velocity und Kapazität des letzten Sprints</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">15–30 Min</div><div class="flow-text">APPM schlägt Sprint-Ziel vor und begründet es</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">30–90 Min</div><div class="flow-text">„Ready"-Tickets in den Sprint ziehen, Umfang bestätigen</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div></div>
+          <div class="flow-content"><div class="flow-tag">90–120 Min</div><div class="flow-text">Sprint-Ziel abgestimmt, Sprint in Jira aktiviert</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-block" style="margin-bottom:14px;">
+    <div class="info-block-title">Checkliste — APPM bereitet vor (bis Dienstagabend)</div>
+    <ul class="checklist">
+      <li><span class="check-sym open">☐</span>Genügend „Ready"-Tickets für die Sprint-Kapazität (+ 10–20 % Puffer)</li>
+      <li><span class="check-sym open">☐</span>Sprint-Ziel formuliert — ein Satz, ergebnisorientiert</li>
+      <li><span class="check-sym open">☐</span>Vorheriger Sprint in Jira geschlossen, unfertige Tickets triagiert</li>
+      <li><span class="check-sym open">☐</span>Verfügbarkeit des Teams (Urlaub, Abwesenheiten) geprüft</li>
+    </ul>
+  </div>
+
+  <div class="info-block" style="margin-bottom:14px;">
+    <div class="info-block-title">Checkliste — Dev Lead bereitet vor (bis Dienstagabend)</div>
+    <ul class="checklist">
+      <li><span class="check-sym open">☐</span>Team-Kapazität berechnet (Story Points, Basis: Ø letzte 3 Sprints)</li>
+      <li><span class="check-sym open">☐</span>Technische Abhängigkeiten oder Risiken für den Sprint markiert</li>
+      <li><span class="check-sym open">☐</span>Carry-Over-Tickets neu geschätzt, falls sich der Scope geändert hat</li>
+    </ul>
+  </div>
+
+  <div class="output-block">
+    <div class="info-block-title">Ergebnis — Planning ist abgeschlossen, wenn …</div>
+    <ul class="checklist">
+      <li><span class="check-sym done">✓</span>Sprint-Ziel schriftlich im Jira-Sprint-Header sichtbar</li>
+      <li><span class="check-sym done">✓</span>Sprint-Board befüllt, Tickets zugewiesen</li>
+      <li><span class="check-sym done">✓</span>Sprint in Jira aktiviert</li>
+      <li><span class="check-sym done">✓</span>Team hat das Sprint-Ziel mündlich bestätigt</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ DAILY ═══ -->
+<div class="ceremony-panel" id="panel-daily">
+  <div class="ceremony-header">
+    <div class="ceremony-icon" style="background:#EAE6FF; font-size:20px;">🔄</div>
+    <div>
+      <div class="ceremony-title">Daily Standup</div>
+      <div class="ceremony-subtitle">Jeden Werktag &nbsp;·&nbsp; 15 Min &nbsp;·&nbsp; Di &amp; Do als Shared Daily (Entwicklung + APPM-Team)</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-block">
+      <div class="info-block-title">Dev Daily — Mo, Mi, Fr (nur Entwicklung)</div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#EAE6FF; color:#403294;">Entwicklungsteam</span>
+        <span class="role-desc">Pflicht</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E3FCEF; color:#216E4E;">Dev Lead</span>
+        <span class="role-desc">Moderiert</span>
+      </div>
+      <hr class="divider" style="margin:10px 0;">
+      <div style="font-size:12px; color:#44546F;">Fokus: Fortschritt auf Sprint-Tickets, technische Blocker, Code-Review-Queue</div>
+    </div>
+    <div class="info-block">
+      <div class="info-block-title">Shared Daily — Di &amp; Do (alle Teams)</div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#EAE6FF; color:#403294;">Entwicklungsteam</span>
+        <span class="role-desc">Pflicht</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E9F2FF; color:#0055CC;">APPM</span>
+        <span class="role-desc">Pflicht</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E3FCEF; color:#216E4E;">Dev Lead</span>
+        <span class="role-desc">Pflicht</span>
+      </div>
+      <hr class="divider" style="margin:10px 0;">
+      <div style="font-size:12px; color:#44546F;">Fokus: teamübergreifende Blocker, Scope-Risiken, ausstehende Entscheidungen</div>
+    </div>
+  </div>
+
+  <div class="info-block" style="margin-bottom:14px;">
+    <div class="info-block-title">Format — 3 Fragen pro Person</div>
+    <ul class="checklist">
+      <li><span class="check-sym" style="color:#6554C0;">●</span>Was habe ich seit dem letzten Standup abgeschlossen?</li>
+      <li><span class="check-sym" style="color:#6554C0;">●</span>Woran arbeite ich heute?</li>
+      <li><span class="check-sym" style="color:#6554C0;">●</span>Habe ich Blocker oder Abhängigkeiten, bei denen ich Unterstützung brauche?</li>
+    </ul>
+  </div>
+
+  <div class="info-block">
+    <div class="info-block-title">Regeln</div>
+    <ul class="checklist">
+      <li><span class="check-sym open">☐</span>Jira-Ticket-Status <strong>vor</strong> dem Standup aktualisieren — das Board spiegelt die Realität wider</li>
+      <li><span class="check-sym open">☐</span>Blocker werden hier genannt, aber erst danach im Nachgespräch gelöst</li>
+      <li><span class="check-sym open">☐</span>Bei Abwesenheit: asynchrones Update vor Standup-Beginn posten</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ REVIEW ═══ -->
+<div class="ceremony-panel" id="panel-review">
+  <div class="ceremony-header">
+    <div class="ceremony-icon" style="background:#FFF0B3; font-size:20px;">🎯</div>
+    <div>
+      <div class="ceremony-title">Sprint Review</div>
+      <div class="ceremony-subtitle">Jeden zweiten Dienstag &nbsp;·&nbsp; ~90 Min &nbsp;·&nbsp; Letzter Tag des Sprints</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-block">
+      <div class="info-block-title">Teilnehmer</div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E9F2FF; color:#0055CC;">APPM</span>
+        <span class="role-desc">Moderiert, nimmt Tickets ab / zurück</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#EAE6FF; color:#403294;">Entwicklungsteam</span>
+        <span class="role-desc">Demonstriert Ergebnisse</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#FFEBE6; color:#AE2A19;">COO</span>
+        <span class="role-desc">Stakeholder-Feedback</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E3FCEF; color:#216E4E;">Dev Lead</span>
+        <span class="role-desc">Technischer Kontext</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#FFF0B3; color:#7F5F01;">Service Center</span>
+        <span class="role-desc">Nutzerperspektive</span>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="info-block-title">Zeitplan (90 Min)</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">0–10 Min</div><div class="flow-text">APPM fasst Sprint-Ziel zusammen — wurde es erreicht?</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">10–60 Min</div><div class="flow-text">Demo der fertiggestellten Tickets — live, nicht als Folien</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">60–80 Min</div><div class="flow-text">Stakeholder-Fragen und Feedback</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div></div>
+          <div class="flow-content"><div class="flow-tag">80–90 Min</div><div class="flow-text">APPM nimmt Tickets ab oder gibt sie zurück; Backlog-Updates notiert</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-block" style="margin-bottom:14px;">
+    <div class="info-block-title">Checkliste — Entwicklungsteam bereitet vor (bis Montag EOD)</div>
+    <ul class="checklist">
+      <li><span class="check-sym open">☐</span>Alle Demo-Tickets auf der Staging-/Testumgebung deployed</li>
+      <li><span class="check-sym open">☐</span>Demo-Skript erstellt — wer präsentiert welches Ticket</li>
+      <li><span class="check-sym open">☐</span>DoD für jedes Präsentations-Ticket geprüft und bestätigt</li>
+      <li><span class="check-sym open">☐</span>Testdaten / Benutzerkonten in der Staging-Umgebung vorbereitet</li>
+      <li><span class="check-sym open">☐</span>Unfertige Tickets vorab dem APPM gemeldet — keine Überraschungen im Meeting</li>
+    </ul>
+  </div>
+
+  <div class="info-block" style="margin-bottom:14px;">
+    <div class="info-block-title">Checkliste — APPM bereitet vor</div>
+    <ul class="checklist">
+      <li><span class="check-sym open">☐</span>Einladung mit Agenda an alle Stakeholder verschickt</li>
+      <li><span class="check-sym open">☐</span>Sprint-Ziel in einem Satz für die Zusammenfassung formuliert</li>
+      <li><span class="check-sym open">☐</span>Akzeptanzkriterien der Tickets vorab durchgesehen</li>
+      <li><span class="check-sym open">☐</span>Liste der unfertigen Tickets mit Begründung vorbereitet</li>
+    </ul>
+  </div>
+
+  <div class="output-block">
+    <div class="info-block-title">Ergebnis — Review ist abgeschlossen, wenn …</div>
+    <ul class="checklist">
+      <li><span class="check-sym done">✓</span>Jedes Ticket in Jira als „Abgenommen" oder „Zurückgegeben" markiert</li>
+      <li><span class="check-sym done">✓</span>Feedback-Punkte ins Backlog aufgenommen</li>
+      <li><span class="check-sym done">✓</span>Sprint in Jira geschlossen</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ RETRO ═══ -->
+<div class="ceremony-panel" id="panel-retro">
+  <div class="ceremony-header">
+    <div class="ceremony-icon" style="background:#FFEBE6; font-size:20px;">💬</div>
+    <div>
+      <div class="ceremony-title">Retrospektive</div>
+      <div class="ceremony-subtitle">Jeden zweiten Dienstag &nbsp;·&nbsp; ~60 Min &nbsp;·&nbsp; Direkt im Anschluss an das Review</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-block">
+      <div class="info-block-title">Teilnehmer</div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#EAE6FF; color:#403294;">Entwicklungsteam</span>
+        <span class="role-desc">Pflicht</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E9F2FF; color:#0055CC;">APPM</span>
+        <span class="role-desc">Pflicht</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#E3FCEF; color:#216E4E;">Dev Lead</span>
+        <span class="role-desc">Pflicht</span>
+      </div>
+      <div class="role-row">
+        <span class="role-badge" style="background:#FFEBE6; color:#AE2A19;">Scrum Master</span>
+        <span class="role-desc">Moderiert</span>
+      </div>
+      <div class="note-block" style="margin-top:12px;">Keine externen Stakeholder — geschützter Raum für das Team</div>
+    </div>
+    <div class="info-block">
+      <div class="info-block-title">Zeitplan (60 Min)</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">0–5 Min</div><div class="flow-text">Überprüfung der Maßnahmen aus der letzten Retro</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">5–25 Min</div><div class="flow-text">Individuelles Schreiben: Was lief gut / Was nicht / Was ausprobieren</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+          <div class="flow-content"><div class="flow-tag">25–45 Min</div><div class="flow-text">Gruppendiskussion, Themen clustern</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"><div class="flow-dot"></div></div>
+          <div class="flow-content"><div class="flow-tag">45–60 Min</div><div class="flow-text">Abstimmung über Maßnahmen, Verantwortliche + Fälligkeitsdatum festlegen</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="output-block">
+    <div class="info-block-title">Ergebnis — Retro ist abgeschlossen, wenn …</div>
+    <ul class="checklist">
+      <li><span class="check-sym done">✓</span>Max. 3 Maßnahmen festgehalten — jeweils mit Verantwortlichem und Fälligkeitsdatum</li>
+      <li><span class="check-sym done">✓</span>Maßnahmen in den nächsten Sprint (als Tasks in Jira) oder ins Retro-Board aufgenommen</li>
+      <li><span class="check-sym done">✓</span>Zusammenfassung nach dem Meeting async ans Team verteilt</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ DoR / DoD ═══ -->
+<div class="ceremony-panel" id="panel-dor-dod">
+  <div class="ceremony-header">
+    <div class="ceremony-icon" style="background:#E3FCEF; font-size:20px;">✅</div>
+    <div>
+      <div class="ceremony-title">Definition of Ready &amp; Definition of Done</div>
+      <div class="ceremony-subtitle">Kontinuierlich angewendet — nicht nur bei Zeremonien</div>
+    </div>
+  </div>
+
+  <div class="dor-dod-grid">
+    <div class="dor-block dor">
+      <div class="dor-block-title">🚪 Definition of Ready (DoR)</div>
+      <p class="sub">Ein Ticket darf in einen Sprint gezogen werden, wenn <em>alle</em> folgenden Punkte erfüllt sind:</p>
+      <ul class="dor-list">
+        <li>Klare, abgestimmte Akzeptanzkriterien vorhanden</li>
+        <li>Story Points vergeben</li>
+        <li>Keine offenen Fragen seitens des Teams</li>
+        <li>Abhängigkeiten identifiziert und gelöst (oder bewusst akzeptiert)</li>
+        <li>Designs / Spezifikationen angehängt oder verlinkt</li>
+        <li>Label „Ready" in Jira gesetzt</li>
+      </ul>
+    </div>
+    <div class="dor-block dod">
+      <div class="dor-block-title">🏁 Definition of Done (DoD)</div>
+      <p class="sub">Ein Ticket darf als „Fertig" markiert werden, wenn <em>alle</em> folgenden Punkte erfüllt sind:</p>
+      <ul class="dor-list">
+        <li>Alle Akzeptanzkriterien erfüllt</li>
+        <li>Code reviewed und freigegeben (mind. 1 Reviewer)</li>
+        <li>Unit-/Integrationstests geschrieben und grün</li>
+        <li>Auf Staging deployed und getestet</li>
+        <li>Keine bekannten kritischen Bugs</li>
+        <li>Jira-Ticket aktualisiert, mit PR/Commit verknüpft</li>
+        <li>APPM-Abnahme eingeholt (bei nutzerseitigen Features)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="info-block">
+    <div class="info-block-title">Verantwortlichkeiten</div>
+    <div class="role-row">
+      <span class="role-badge" style="background:#E9F2FF; color:#0055CC;">APPM</span>
+      <span class="role-desc">Verantwortlich für die DoR — stellt sicher, dass Tickets vor dem Planning refined und bereit sind</span>
+    </div>
+    <div class="role-row" style="margin-top:8px;">
+      <span class="role-badge" style="background:#E3FCEF; color:#216E4E;">Dev Lead</span>
+      <span class="role-desc">Verantwortlich für die DoD — prüft Tickets, bevor sie in die Spalte „Fertig" verschoben werden</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function sendHeight() {
+  var h = document.documentElement.scrollHeight || document.body.scrollHeight;
+  window.parent.postMessage({ type: 'iframeHeight', height: h }, '*');
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.ceremony-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(sendHeight, 50);
+}
+
+window.addEventListener('load', sendHeight);
+window.addEventListener('message', function(e) {
+  if (e.data === 'getHeight') sendHeight();
+});
+</script>
+
+</body>
+</html>
