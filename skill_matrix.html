@@ -28,8 +28,9 @@ nav button.on{color:var(--ink);border-bottom-color:var(--blau)}
 .reset-btn.show{display:inline-block}
 .legend{display:flex;gap:4px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);flex-wrap:wrap}
 .lg{width:17px;height:17px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
-.karte{display:grid;grid-template-columns:225px 1fr 225px;gap:14px}
-@media(max-width:950px){.karte{grid-template-columns:1fr}}
+.karte{display:grid;grid-template-columns:215px minmax(250px,1fr) minmax(340px,430px) 215px;gap:14px;align-items:start}
+@media(max-width:1250px){.karte{grid-template-columns:215px 1fr 215px}.detailcol{grid-column:1 / -1;order:5}}
+@media(max-width:950px){.karte{grid-template-columns:1fr}.detailcol{grid-column:auto;order:0}}
 .col h2{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .col h2.mt{margin-top:16px}
 .person{display:flex;align-items:center;gap:8px;padding:6px 9px;border:1px solid var(--line);border-radius:4px;margin-bottom:5px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit}
@@ -41,6 +42,12 @@ nav button.on{color:var(--ink);border-bottom-color:var(--blau)}
 .p-dev .dot{background:var(--gruen)}
 .person .nm{font-weight:600;font-size:12.5px}
 .person .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);margin-left:auto}
+.comp{display:flex;align-items:center;gap:8px;padding:4px 9px;border:1px solid var(--line);border-radius:4px;margin-bottom:4px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit}
+.comp:hover{border-color:var(--blau)}
+.comp.active{border-color:var(--blau);box-shadow:0 0 0 2px rgba(29,92,138,.18)}
+.comp.dim{opacity:.28}
+.comp .cn{font-family:'IBM Plex Mono',monospace;font-size:11px;flex:1}
+.comp .chip{margin-left:auto}
 .cluster{margin-bottom:8px;border:1px solid var(--line);border-radius:4px;background:#fff;overflow:hidden}
 .cluster>summary{cursor:pointer;padding:8px 12px;font-weight:700;font-size:13px;display:flex;gap:8px;list-style:none;user-select:none}
 .cluster>summary::-webkit-details-marker{display:none}
@@ -55,13 +62,15 @@ nav button.on{color:var(--ink);border-bottom-color:var(--blau)}
 .mod .mname{font-size:12.5px;flex:1}
 .chip{min-width:27px;height:16px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;padding:0 3px}
 .chip.none{background:#fff;border:1px dashed #C1C7D0;color:#8993A4}
-.detail{border-top:2px solid var(--ink);background:#fff;padding:16px 18px 20px;margin-top:16px;display:none;border-radius:0 0 5px 5px}
-.detail.show{display:block}
+.detail{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-right:2px}
+.detail h3{font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:14px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:4px 4px 0 0}
+.detail .dwrap{border:1px solid var(--line);border-radius:4px;background:#fff;overflow:hidden;margin-bottom:8px}
+.detail .dbody{padding:10px 12px}
+.empty{border:1px dashed #C1C7D0;border-radius:4px;padding:22px 14px;text-align:center;color:var(--soft);font-size:12.5px;background:#fff}
 .detail h3{font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;text-transform:uppercase}
 .detail .crumb{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);text-transform:uppercase;letter-spacing:.06em}
-.grid2{display:grid;grid-template-columns:290px 1fr;gap:16px;margin-top:12px}
-@media(max-width:900px){.grid2{grid-template-columns:1fr}}
-.dimbox{border:1px solid var(--line);border-radius:4px;padding:10px 12px;background:var(--paper)}
+.grid2{display:grid;grid-template-columns:1fr;gap:8px;margin-top:0}
+.dimbox{border:1px solid var(--line);border-radius:4px;padding:9px 11px;background:#fff}
 .dimbox h4{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);margin-bottom:8px}
 .dimbox+.dimbox{margin-top:10px}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:3px;font-size:12px;margin:0 4px 5px 0;background:#fff;border:1px solid var(--line)}
@@ -126,15 +135,15 @@ td.modc{position:sticky;left:0;background:#fff;z-index:1;min-width:210px}
       <span class="lg c3">3</span><span class="lg c4">4</span><span class="lg c5">5</span>
       <span style="margin-left:8px">Chips: A = AM max fachlich · S = SC max fachlich · D = Dev-Abdeckung über Komponenten (schwächstes Glied)</span></div>
   </div>
-  <div class="karte">
+  <div class="karte" id="karte">
     <section class="col">
       <h2>Applikationsmanagement</h2><div id="ams"></div>
       <h2 class="mt">Service Center</h2><div id="scs"></div>
     </section>
     <section class="col"><h2>Cluster / App-Module</h2><div id="clusters"></div></section>
-    <section class="col"><h2>Entwicklung</h2><div id="devs"></div></section>
+    <section class="col detailcol"><h2>Details</h2><div class="detail" id="detail" aria-live="polite"></div></section>
+    <section class="col"><h2>Entwicklung</h2><div id="devs"></div><h2 class="mt">Komponenten</h2><div id="comps"></div></section>
   </div>
-  <div class="detail" id="detail" aria-live="polite"></div>
 </div>
 
 <div class="sec" id="sec-ov">
@@ -219,6 +228,16 @@ clusters.forEach(cl => {
   det.appendChild(box); clEl.appendChild(det);
 });
 
+const compEl = document.getElementById("comps");
+D.components.forEach(cp => {
+  const b = document.createElement("button");
+  b.className = "comp"; b.dataset.comp = cp;
+  const best = compMax[cp] ?? 0;
+  b.innerHTML = `<span class="cn">${cp}</span><span class="chip c${best}" title="bester Dev (technisch)">${best}</span>`;
+  b.onclick = () => toggle("comp", cp);
+  compEl.appendChild(b);
+});
+
 function toggle(type, id){ sel = (sel && sel.type===type && sel.id===id) ? null : {type, id}; apply(); }
 resetBtn.onclick = () => { sel=null; apply(); };
 window.selectComp = c => { sel = {type:"comp", id:c}; apply(); };
@@ -234,6 +253,23 @@ function apply(){
     el.classList.toggle("active", !!sel && sel.type==="app" && sel.id===el.dataset.key);
     el.classList.remove("dim");
   });
+  document.querySelectorAll(".comp").forEach(el=>{
+    el.classList.toggle("active", !!sel && sel.type==="comp" && sel.id===el.dataset.comp);
+    el.classList.remove("dim");
+  });
+  if(sel && sel.type==="app"){
+    const [c,m] = sel.id.split("|");
+    const a = D.app_modules.find(x=>x.c===c&&x.m===m);
+    const cset = new Set(compsOf(a));
+    document.querySelectorAll(".comp").forEach(el=>el.classList.toggle("dim", !cset.has(el.dataset.comp)));
+  }
+  if(sel && sel.type==="Dev"){
+    const strong = new Set(D.dev_r.filter(r=>r.p===sel.id&&r.t>=3).map(r=>r.comp));
+    document.querySelectorAll(".comp").forEach(el=>el.classList.toggle("dim", !strong.has(el.dataset.comp)));
+  }
+  if(sel && (sel.type==="AM"||sel.type==="SC")){
+    document.querySelectorAll(".comp").forEach(el=>el.classList.add("dim"));
+  }
   if(sel && (sel.type==="AM"||sel.type==="SC"||sel.type==="Dev")){
     const set = covPerson[sel.id]||new Set();
     document.querySelectorAll(".mod").forEach(el=>el.classList.toggle("dim", !set.has(el.dataset.key)));
@@ -266,8 +302,7 @@ const detEl = document.getElementById("detail");
 const tag = (name, lv, extra="") => `<span class="tag">${name}${extra}<span class="lv c${lv}">${lv}</span></span>`;
 
 function renderDetail(){
-  if(!sel){ detEl.classList.remove("show"); detEl.innerHTML=""; return; }
-  detEl.classList.add("show");
+  if(!sel){ detEl.innerHTML = `<div class="empty">App-Modul, Person oder Komponente anklicken,<br>um die Details anzuzeigen.</div>`; return; }
 
   if(sel.type==="app"){
     const [c,m] = sel.id.split("|");
@@ -298,54 +333,55 @@ function renderDetail(){
       });
       right += `<div class="weakflag">⚠ Schwächstes Glied: ${weakComp} (max ${dmin})${dmin<3?" — Modul technisch nicht sicher lieferbar":""}</div>`;
     }
-    detEl.innerHTML = `<div class="crumb">${c}</div><h3>${m}</h3><div class="grid2"><div>${left}</div><div>${right}</div></div>`;
+    detEl.innerHTML = `<div class="dwrap"><h3>${m} <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:400;color:#9FB0BC;text-transform:uppercase;letter-spacing:.06em;margin-left:6px">${c}</span></h3><div class="dbody"><div class="grid2"><div>${left}</div><div>${right}</div></div></div></div>`;
   }
 
   if(sel.type==="comp"){
     const comp = sel.id;
     const devs = (devByComp[comp]||[]).filter(x=>x.t>=1).sort((x,y)=>y.t-x.t);
     const mods = modsByComp[comp]||[];
-    detEl.innerHTML = `<div class="crumb">Komponente</div><h3>${comp}</h3>
-      <div class="grid2">
+    detEl.innerHTML = `<div class="dwrap"><h3>${comp} <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:400;color:#9FB0BC;text-transform:uppercase;letter-spacing:.06em;margin-left:6px">Komponente</span></h3><div class="dbody"><div class="grid2">
         <div class="dimbox"><h4>Entwickler — technisch</h4>
           ${devs.length?devs.map(x=>tag(short(x.p),x.t)).join(""):'<span class="banner">niemand ≥ 1</span>'}</div>
         <div class="dimbox"><h4>Verwendet in App-Modulen</h4>
           ${mods.length?mods.map(a=>`<span class="tag click" onclick="selectApp('${(a.c+"|"+a.m).replace(/'/g,"\\'")}')">${a.m}<span class="rb">${a.c}</span></span>`).join(""):'<span class="banner">keinem</span>'}</div>
-      </div>`;
+      </div></div></div>`;
   }
 
   if(sel.type==="AM"||sel.type==="SC"){
     const src = sel.type==="AM" ? D.am_r : D.sc_r;
     const mine = src.filter(x=>x.p===sel.id&&x.f>=3);
     const grp = {}; mine.forEach(x=>(grp[x.c] ||= []).push(x));
-    let h = `<div class="crumb">${sel.type==="AM"?"Applikationsmanagement":"Service Center"}</div><h3>${sel.id}</h3>
-      <p class="hint">Deckt ${mine.length} App-Module fachlich ab (≥ 3):</p>`;
+    let h = `<div class="dwrap"><h3>${short(sel.id)} <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:400;color:#9FB0BC;text-transform:uppercase;letter-spacing:.06em;margin-left:6px">${sel.type==="AM"?"Applikationsmanagement":"Service Center"}</span></h3><div class="dbody">
+      <p class="hint" style="margin-top:0">Deckt ${mine.length} App-Module fachlich ab (≥ 3):</p>`;
     Object.entries(grp).forEach(([c,list])=>{
       h += `<div style="margin-bottom:8px"><span class="crumb">${c}</span><br>` +
         list.sort((x,y)=>y.f-x.f).map(x=>tag(x.m,x.f)).join("") + `</div>`;
     });
-    detEl.innerHTML = h;
+    detEl.innerHTML = h + "</div></div>";
   }
 
   if(sel.type==="Dev"){
     const mineC = D.dev_r.filter(x=>x.p===sel.id&&x.t>=3).sort((x,y)=>y.t-x.t);
     const strong = new Set(mineC.map(x=>x.comp));
     const mods = D.app_modules.filter(a=>compsOf(a).some(c=>strong.has(c)));
-    detEl.innerHTML = `<div class="crumb">Entwicklung</div><h3>${sel.id}</h3>
-      <div class="grid2">
+    detEl.innerHTML = `<div class="dwrap"><h3>${short(sel.id)} <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:400;color:#9FB0BC;text-transform:uppercase;letter-spacing:.06em;margin-left:6px">Entwicklung</span></h3><div class="dbody"><div class="grid2">
         <div class="dimbox"><h4>Komponenten — technisch ≥ 3</h4>
           ${mineC.map(x=>`<span class="tag click" onclick="selectComp('${x.comp.replace(/'/g,"\\'")}')">${x.comp}<span class="lv c${x.t}">${x.t}</span></span>`).join("")||'<span class="banner">keine</span>'}</div>
         <div class="dimbox"><h4>Trägt damit App-Module (mind. eine Komponente ≥ 3)</h4>
           ${mods.map(a=>`<span class="tag click" onclick="selectApp('${(a.c+"|"+a.m).replace(/'/g,"\\'")}')">${a.m}<span class="rb">${a.c}</span></span>`).join("")||'<span class="banner">keine</span>'}</div>
-      </div>`;
+      </div></div></div>`;
   }
 }
+
+renderDetail(); // initial empty state
 
 // search
 document.getElementById("q").addEventListener("input", e=>{
   const q = e.target.value.trim().toLowerCase();
   document.querySelectorAll(".mod").forEach(el=>{el.style.display = !q||el.dataset.key.toLowerCase().includes(q)?"":"none";});
   document.querySelectorAll(".person").forEach(el=>{el.style.display = !q||el.dataset.id.toLowerCase().includes(q)?"":"none";});
+  document.querySelectorAll(".comp").forEach(el=>{el.style.display = !q||el.dataset.comp.toLowerCase().includes(q)?"":"none";});
   document.querySelectorAll(".cluster").forEach(det=>{
     const any=[...det.querySelectorAll(".mod")].some(m=>m.style.display!=="none");
     det.style.display = any||!q ? "" : "none";});
