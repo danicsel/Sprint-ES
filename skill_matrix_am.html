@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill-Matrix · Applikationsmanagement</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Archivo:wght@800&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F6F7F5;--ink:#16232E;--soft:#5A6B77;--line:#D8DEE2;--blau:#1D5C8A;--rot:#C4442E}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.45}
+.note{background:#EAF1F7;color:#1D5C8A;padding:7px 22px;font-family:'IBM Plex Mono',monospace;font-size:11px}
+header{padding:18px 22px 12px;border-bottom:2px solid var(--ink);background:#fff}
+h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(19px,4vw,27px);text-transform:uppercase}
+h1 span{color:var(--blau)}
+header .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--soft);margin-top:3px}
+nav{display:flex;border-bottom:1px solid var(--line);background:#fff;overflow-x:auto}
+nav button{font:inherit;font-weight:600;font-size:13px;padding:11px 18px;border:none;background:none;cursor:pointer;color:var(--soft);border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--blau)}
+.wrap{padding:18px 22px 40px}
+.sec{display:none}.sec.on{display:block}
+.c0{background:#F1F2F4;color:#44546F}.c1{background:#FFECEB;color:#AE2E24}.c2{background:#FEEDD3;color:#A54800}
+.c3{background:#FFF7D6;color:#7F5F01}.c4{background:#EFFFD6;color:#4C6B1F}.c5{background:#DFFCF0;color:#216E4E}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.toolbar input{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 10px;border:1px solid var(--line);border-radius:3px;background:#fff;min-width:220px}
+.reset-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 12px;border:1px solid var(--ink);background:#fff;border-radius:3px;cursor:pointer;display:none}
+.reset-btn.show{display:inline-block}
+.legend{display:flex;gap:4px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);flex-wrap:wrap}
+.lg{width:17px;height:17px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+.karte{display:grid;grid-template-columns:225px minmax(280px,1fr) minmax(360px,460px);gap:14px;align-items:start}
+@media(max-width:1100px){.karte{grid-template-columns:225px 1fr}.detailcol{grid-column:1 / -1;order:5}}
+@media(max-width:800px){.karte{grid-template-columns:1fr}.detailcol{grid-column:auto;order:0}}
+.col h2{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.person{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);border-radius:4px;margin-bottom:5px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit}
+.person:hover{border-color:var(--blau)}
+.person.active{border-color:var(--blau);box-shadow:0 0 0 2px rgba(29,92,138,.18)}
+.person.dim{opacity:.28}
+.person .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--blau)}
+.person .nm{font-weight:600;font-size:12.5px}
+.person .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);margin-left:auto}
+.cluster{margin-bottom:8px;border:1px solid var(--line);border-radius:4px;background:#fff;overflow:hidden}
+.cluster>summary{cursor:pointer;padding:8px 12px;font-weight:700;font-size:13px;display:flex;gap:8px;list-style:none;user-select:none}
+.cluster>summary::-webkit-details-marker{display:none}
+.cluster>summary::before{content:"▸";color:var(--soft);font-size:11px}
+.cluster[open]>summary::before{content:"▾"}
+.cluster>summary .cnt{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);margin-left:auto;font-weight:400}
+.mods{padding:0 8px 8px}
+.mod{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:3px;cursor:pointer;border:1px solid transparent}
+.mod:hover{background:var(--paper);border-color:var(--line)}
+.mod.active{background:var(--paper);border-color:var(--blau)}
+.mod.dim{opacity:.25}
+.mod .mname{font-size:12.5px;flex:1}
+.chip{min-width:27px;height:16px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;padding:0 3px}
+.detail{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-right:2px}
+.detail h3{font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:14px;background:var(--ink);color:#fff;padding:8px 12px;border-radius:4px 4px 0 0}
+.detail .dwrap{border:1px solid var(--line);border-radius:4px;background:#fff;overflow:hidden;margin-bottom:8px}
+.detail .dbody{padding:10px 12px}
+.empty{border:1px dashed #C1C7D0;border-radius:4px;padding:22px 14px;text-align:center;color:var(--soft);font-size:12.5px;background:#fff}
+.dimbox{border:1px solid var(--line);border-radius:4px;padding:9px 11px;background:#fff;margin-bottom:8px}
+.dimbox h4{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);margin-bottom:8px}
+.besch{font-size:12px;color:var(--soft);padding:8px 11px;border-left:3px solid var(--line);margin-bottom:8px;background:var(--paper);border-radius:0 3px 3px 0}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:3px;font-size:12px;margin:0 4px 5px 0;background:#fff;border:1px solid var(--line)}
+.tag .lv{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:1px 6px;border-radius:2px}
+.banner{border:1px dashed var(--soft);border-radius:4px;padding:9px 13px;font-size:12.5px;color:var(--soft);background:var(--paper);display:inline-block}
+table{border-collapse:collapse;background:#fff;font-size:13px;width:100%}
+th{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);padding:6px 8px;border:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:2}
+td{border:1px solid var(--line);padding:5px 8px}
+td.num{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;width:52px}
+tr.clrow td{background:var(--ink);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;padding:4px 8px}
+.status{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:2px;white-space:nowrap}
+.st-ok{background:#DFFCF0;color:#216E4E}.st-w{background:#FFF7D6;color:#7F5F01}.st-b{background:#FFECEB;color:#AE2E24}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:4px;padding:12px 14px}
+.kpi .v{font-family:'Archivo',sans-serif;font-weight:800;font-size:26px}
+.kpi .v.bad{color:var(--rot)}
+.kpi .l{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:4px;background:#fff;max-height:78vh}
+.hint{font-size:12px;color:var(--soft);margin:8px 0 14px}
+h2.sect{font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;margin:4px 0 10px}
+th.rot{height:104px;vertical-align:bottom;padding:6px 0 8px;font-size:9px}
+th.rot span{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;white-space:nowrap}
+th.modh{text-align:left;min-width:210px;z-index:3;left:0;position:sticky;background:var(--paper)}
+td.modc{position:sticky;left:0;background:#fff;z-index:1;min-width:210px}
+:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="note">AM-Bewertungsrunde abgeschlossen (5/5 vollständig) · Service Center und Entwicklung folgen — Ansicht wird dann erweitert.</div>
+<header>
+  <h1>Skill-Matrix <span>Applikationsmanagement</span></h1>
+  <div class="sub" id="subline"></div>
+</header>
+<nav>
+  <button class="on" data-s="karte">Landkarte</button>
+  <button data-s="ov">Übersicht</button>
+  <button data-s="hf">Heatmap Fachlich</button>
+  <button data-s="ht">Heatmap Technisch</button>
+  <button data-s="risk">Risiken</button>
+</nav>
+<div class="wrap">
+
+<div class="sec on" id="sec-karte">
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Suchen: Modul, Cluster, Person …">
+    <button id="reset" class="reset-btn">✕ Auswahl aufheben</button>
+    <div class="legend"><span>Skala:</span>
+      <span class="lg c0">0</span><span class="lg c1">1</span><span class="lg c2">2</span>
+      <span class="lg c3">3</span><span class="lg c4">4</span><span class="lg c5">5</span>
+      <span style="margin-left:8px">Chips: F = max Fachlich · T = max Technisch (über alle 5 AMs)</span></div>
+  </div>
+  <div class="karte">
+    <section class="col"><h2>Applikationsmanagement</h2><div id="ams"></div></section>
+    <section class="col"><h2>Cluster / App-Module</h2><div id="clusters"></div></section>
+    <section class="col detailcol"><h2>Details</h2><div class="detail" id="detail" aria-live="polite"></div></section>
+  </div>
+</div>
+
+<div class="sec" id="sec-ov">
+  <div class="kpis" id="kpis"></div>
+  <h2 class="sect">Abdeckung je App-Modul</h2>
+  <div class="hint">abgedeckt = mind. eine Person ≥ 3 · Klumpen = genau eine</div>
+  <div class="scroll" id="cov"></div>
+</div>
+<div class="sec" id="sec-hf"><h2 class="sect">AM × App-Module — Fachlich</h2><div class="scroll" id="hm-f"></div></div>
+<div class="sec" id="sec-ht"><h2 class="sect">AM × App-Module — Technisch</h2><div class="scroll" id="hm-t"></div></div>
+<div class="sec" id="sec-risk">
+  <h2 class="sect">Risiken</h2>
+  <div class="hint">Problem × Priorität (aus der App-Module-DB), schwerste zuerst · Module ohne Priorität mit Mittel-Gewicht</div>
+  <div class="scroll" id="risk"></div>
+</div>
+</div>
+
+<script>
+const D = {"stand": "30.09.2026", "persons": ["Robert Plaschzug", "Irina Kremers", "Nicole Wieser", "Matjaz Vörös", "Rene Hofer"], "modules": [{"c": "Billing", "m": "Allgemein", "prio": "Niedrig", "besch": "Allgemeines, nicht Zuordenbares — soll reduziert werden"}, {"c": "Billing", "m": "Abrechnung", "prio": "Höchste", "besch": "Abrechnung (Parameter, Varianten, unterschiedliche Energiearten)"}, {"c": "Billing", "m": "AbrechnungSpotFlex", "prio": "Hoch", "besch": "Spot-Abrechnung (Varianten), Verwaltungsmasken in Verbindung mit der Berechnung über EDM"}, {"c": "Billing", "m": "DMSlight", "prio": "Mittel", "besch": "Einfaches Dokumentenmanagement System integriert in Billing"}, {"c": "Billing", "m": "PDF-Verträge", "prio": "Niedrig", "besch": "vorausgefüllte PDF Verträge (LF und NB) über Billing"}, {"c": "Billing", "m": "Produkte", "prio": "Höchste", "besch": "Erstellung der Produkte im Billing (Energie, Netz, Abgaben, NL, …); Tarife"}, {"c": "Billing", "m": "Rechnungsdruck", "prio": "Hoch", "besch": "Rechnungsdruck (korrekte Anzeige, Layout - Darstellung)\n(Empfänger: DMS, Print, Email, BKP, revisionssichere Ablage)"}, {"c": "Billing", "m": "FiBu Basiseinstellungen", "prio": "Hoch", "besch": "Soll/Haben, Buchungen (BUDE BUFI STAP), Kontenpläne, Kostenstellen, Stammdaten, Abrechnungsverbuchung, Interface nach Extern, Parameter"}, {"c": "Billing", "m": "FiBu Mahnung", "prio": "Hoch", "besch": "Mahnung und Verzugszinsenberechnung, BiPayment"}, {"c": "Billing", "m": "FiBu Zahlwesen", "prio": "Hoch", "besch": "Datenträger, man. buchen, AVIS, BiPayment"}, {"c": "Billing", "m": "FiBu TZB", "prio": "Hoch", "besch": "Vorschreibungen (von der Berechnung bis Erstellung TZB Läufe, TZB Berechnungsnachweis)"}, {"c": "Billing", "m": "Marktteilnehmer", "prio": "Mittel", "besch": "Stammdaten MT, Verwaltung EGs (ex EDM EAG Marktrollen)"}, {"c": "Billing", "m": "MVE", "prio": "Mittel", "besch": "ex OVE/OVX/OVI Massenvertragserfassung; Import-Schnittstelle Kunden-/Vertragsdaten zur Übergabe an EWP und autom. Vertragsanlage"}, {"c": "Billing", "m": "Smart Meter GeräteManagement", "prio": "Hoch", "besch": "Smart Meter Handling innerhalb von Billing, Templates, Konfigurationen; Routen"}, {"c": "Billing", "m": "StatistikAuswertungenReports", "prio": "Hoch", "besch": "Gesetzliche Statistiken und Individual-Statistiken, Auswertungen"}, {"c": "Billing", "m": "Verwaltung", "prio": "Mittel", "besch": "Masken, Stammdaten"}, {"c": "Billing", "m": "XMLin & XMLout", "prio": "Höchste", "besch": "Erstellung und Verarbeitung von XML-Rechnungen, Verwaltungsmaske, ProduktCodes"}, {"c": "EDM", "m": "Energiegemeinschaften", "prio": "Höchste", "besch": "EAG (EEG/BEG/EDL/PVGA)"}, {"c": "EDM", "m": "EDM (alt)", "prio": "", "besch": ""}, {"c": "EThrill", "m": "EThrill", "prio": "", "besch": ""}, {"c": "EThrill", "m": "EThrill EW", "prio": "", "besch": "Ersatzwertbildung"}, {"c": "EThrill", "m": "EThrill Datenversand", "prio": "", "besch": ""}, {"c": "EThrill", "m": "Energiegemeinschaften", "prio": "", "besch": ""}, {"c": "Handels-Systeme", "m": "ABSYS", "prio": "", "besch": ""}, {"c": "Handels-Systeme", "m": "EVA", "prio": "", "besch": "Kann Billing sein, kann EVA Projekt sein"}, {"c": "Handels-Systeme", "m": "Generis", "prio": "", "besch": ""}, {"c": "Marktkommunikation", "m": "Customer Processes", "prio": "", "besch": "EG-Prozesse, Stammdaten-Prozesse, sonstige Prozesse"}, {"c": "Marktkommunikation", "m": "Datenversand", "prio": "", "besch": "variabler Datenversand, Auslöser Billing (nicht Ethrill)"}, {"c": "Marktkommunikation", "m": "EBU - Verr. Datenimport", "prio": "", "besch": ""}, {"c": "Marktkommunikation", "m": "EWP", "prio": "", "besch": "inkl. Ponton"}, {"c": "Billing,Output-Management", "m": "DMS - Schinnerl (Druckstraße)", "prio": "Mittel", "besch": "PDF Druck an Servicedienstleister (Interface zu DMS Schinnerl)"}, {"c": "Output-Management", "m": "Druck-Queues (PDF Printer Server)", "prio": "Mittel", "besch": "Ansteuerung Drucker Queues, Overlays, Drucker im Billing"}, {"c": "Billing,Output-Management", "m": "Email Versand", "prio": "Hoch", "besch": "E-Mail Versand - BKP, Endkunden direkt"}, {"c": "Portale", "m": "David Portal (DAV - NB)", "prio": "", "besch": "Netzbetreiber-Portal"}, {"c": "Portale", "m": "Bestandskundenportal (BKP - LF)", "prio": "", "besch": "ex EL-Portal, Lieferant"}, {"c": "Portale", "m": "Kampagnenmanagement", "prio": "", "besch": ""}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM", "prio": "", "besch": "Kapsch"}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM / Vision Air", "prio": "", "besch": "Kampstrup"}, {"c": "Smart Meter / Gerätemanagement", "m": "Smartinsight", "prio": "", "besch": ""}, {"c": "Smart Meter / Gerätemanagement", "m": "Billing SM Konfigs", "prio": "", "besch": "Warum wurde das rausgezogen aus Billing / Smart Meter Management?"}, {"c": "Clearing System", "m": "Clearing alt", "prio": "", "besch": "inkludiert SmartWare"}, {"c": "Clearing System", "m": "Clearing EThrill", "prio": "", "besch": ""}, {"c": "WFM/Aures", "m": "AURES", "prio": "", "besch": ""}, {"c": "WFM/Aures", "m": "AURES Tablets", "prio": "", "besch": ""}, {"c": "ZFA System", "m": "Converge", "prio": "", "besch": ""}, {"c": "ZFA System", "m": "Zählereinbau", "prio": "", "besch": ""}, {"c": "ZFA System", "m": "Zählerwechsel", "prio": "", "besch": ""}], "ratings": [{"c": "Billing", "m": "Allgemein", "p": "Robert Plaschzug", "f": 5, "t": 4}, {"c": "Billing", "m": "Abrechnung", "p": "Robert Plaschzug", "f": 5, "t": 4}, {"c": "Billing", "m": "AbrechnungSpotFlex", "p": "Robert Plaschzug", "f": 4, "t": 4}, {"c": "Billing", "m": "DMSlight", "p": "Robert Plaschzug", "f": 3, "t": 3}, {"c": "Billing", "m": "PDF-Verträge", "p": "Robert Plaschzug", "f": 3, "t": 3}, {"c": "Billing", "m": "Produkte", "p": "Robert Plaschzug", "f": 5, "t": 4}, {"c": "Billing", "m": "Rechnungsdruck", "p": "Robert Plaschzug", "f": 4, "t": 4}, {"c": "Billing", "m": "FiBu Basiseinstellungen", "p": "Robert Plaschzug", "f": 4, "t": 4}, {"c": "Billing", "m": "FiBu Mahnung", "p": "Robert Plaschzug", "f": 2, "t": 2}, {"c": "Billing", "m": "FiBu Zahlwesen", "p": "Robert Plaschzug", "f": 4, "t": 4}, {"c": "Billing", "m": "FiBu TZB", "p": "Robert Plaschzug", "f": 5, "t": 4}, {"c": "Billing", "m": "Marktteilnehmer", "p": "Robert Plaschzug", "f": 3, "t": 2}, {"c": "Billing", "m": "MVE", "p": "Robert Plaschzug", "f": 2, "t": 2}, {"c": "Billing", "m": "Smart Meter GeräteManagement", "p": "Robert Plaschzug", "f": 3, "t": 2}, {"c": "Billing", "m": "StatistikAuswertungenReports", "p": "Robert Plaschzug", "f": 3, "t": 3}, {"c": "Billing", "m": "Verwaltung", "p": "Robert Plaschzug", "f": 5, "t": 4}, {"c": "Billing", "m": "XMLin & XMLout", "p": "Robert Plaschzug", "f": 2, "t": 2}, {"c": "EDM", "m": "Energiegemeinschaften", "p": "Robert Plaschzug", "f": 1, "t": 2}, {"c": "EDM", "m": "EDM (alt)", "p": "Robert Plaschzug", "f": 3, "t": 2}, {"c": "EThrill", "m": "EThrill", "p": "Robert Plaschzug", "f": 2, "t": 1}, {"c": "EThrill", "m": "EThrill EW", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "EThrill", "m": "EThrill Datenversand", "p": "Robert Plaschzug", "f": 1, "t": 0}, {"c": "EThrill", "m": "Energiegemeinschaften", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "Handels-Systeme", "m": "ABSYS", "p": "Robert Plaschzug", "f": 1, "t": 2}, {"c": "Handels-Systeme", "m": "EVA", "p": "Robert Plaschzug", "f": 4, "t": 3}, {"c": "Handels-Systeme", "m": "Generis", "p": "Robert Plaschzug", "f": 0, "t": 0}, {"c": "Marktkommunikation", "m": "Customer Processes", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "Marktkommunikation", "m": "Datenversand", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "Marktkommunikation", "m": "EBU - Verr. Datenimport", "p": "Robert Plaschzug", "f": 2, "t": 2}, {"c": "Marktkommunikation", "m": "EWP", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "Billing,Output-Management", "m": "DMS - Schinnerl (Druckstraße)", "p": "Robert Plaschzug", "f": 5, "t": 5}, {"c": "Output-Management", "m": "Druck-Queues (PDF Printer Server)", "p": "Robert Plaschzug", "f": 4, "t": 4}, {"c": "Billing,Output-Management", "m": "Email Versand", "p": "Robert Plaschzug", "f": 3, "t": 3}, {"c": "Portale", "m": "David Portal (DAV - NB)", "p": "Robert Plaschzug", "f": 2, "t": 2}, {"c": "Portale", "m": "Bestandskundenportal (BKP - LF)", "p": "Robert Plaschzug", "f": 2, "t": 2}, {"c": "Portale", "m": "Kampagnenmanagement", "p": "Robert Plaschzug", "f": 2, "t": 2}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM", "p": "Robert Plaschzug", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM / Vision Air", "p": "Robert Plaschzug", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Smartinsight", "p": "Robert Plaschzug", "f": 1, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Billing SM Konfigs", "p": "Robert Plaschzug", "f": 1, "t": 2}, {"c": "Clearing System", "m": "Clearing alt", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "Clearing System", "m": "Clearing EThrill", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "WFM/Aures", "m": "AURES", "p": "Robert Plaschzug", "f": 2, "t": 1}, {"c": "WFM/Aures", "m": "AURES Tablets", "p": "Robert Plaschzug", "f": 2, "t": 1}, {"c": "ZFA System", "m": "Converge", "p": "Robert Plaschzug", "f": 2, "t": 1}, {"c": "ZFA System", "m": "Zählereinbau", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "ZFA System", "m": "Zählerwechsel", "p": "Robert Plaschzug", "f": 1, "t": 1}, {"c": "Billing", "m": "Allgemein", "p": "Irina Kremers", "f": 3, "t": 3}, {"c": "Billing", "m": "Abrechnung", "p": "Irina Kremers", "f": 3, "t": 2}, {"c": "Billing", "m": "AbrechnungSpotFlex", "p": "Irina Kremers", "f": 1, "t": 1}, {"c": "Billing", "m": "DMSlight", "p": "Irina Kremers", "f": 4, "t": 4}, {"c": "Billing", "m": "PDF-Verträge", "p": "Irina Kremers", "f": 5, "t": 5}, {"c": "Billing", "m": "Produkte", "p": "Irina Kremers", "f": 4, "t": 4}, {"c": "Billing", "m": "Rechnungsdruck", "p": "Irina Kremers", "f": 5, "t": 5}, {"c": "Billing", "m": "FiBu Basiseinstellungen", "p": "Irina Kremers", "f": 2, "t": 1}, {"c": "Billing", "m": "FiBu Mahnung", "p": "Irina Kremers", "f": 2, "t": 1}, {"c": "Billing", "m": "FiBu Zahlwesen", "p": "Irina Kremers", "f": 2, "t": 1}, {"c": "Billing", "m": "FiBu TZB", "p": "Irina Kremers", "f": 2, "t": 1}, {"c": "Billing", "m": "Marktteilnehmer", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Billing", "m": "MVE", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Billing", "m": "Smart Meter GeräteManagement", "p": "Irina Kremers", "f": 1, "t": 1}, {"c": "Billing", "m": "StatistikAuswertungenReports", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Billing", "m": "Verwaltung", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Billing", "m": "XMLin & XMLout", "p": "Irina Kremers", "f": 1, "t": 1}, {"c": "EDM", "m": "Energiegemeinschaften", "p": "Irina Kremers", "f": 2, "t": 2}, {"c": "EDM", "m": "EDM (alt)", "p": "Irina Kremers", "f": 3, "t": 3}, {"c": "EThrill", "m": "EThrill", "p": "Irina Kremers", "f": 1, "t": 1}, {"c": "EThrill", "m": "EThrill EW", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "EThrill", "m": "EThrill Datenversand", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "EThrill", "m": "Energiegemeinschaften", "p": "Irina Kremers", "f": 2, "t": 2}, {"c": "Handels-Systeme", "m": "ABSYS", "p": "Irina Kremers", "f": 4, "t": 5}, {"c": "Handels-Systeme", "m": "EVA", "p": "Irina Kremers", "f": 3, "t": 5}, {"c": "Handels-Systeme", "m": "Generis", "p": "Irina Kremers", "f": 5, "t": 5}, {"c": "Marktkommunikation", "m": "Customer Processes", "p": "Irina Kremers", "f": 2, "t": 2}, {"c": "Marktkommunikation", "m": "Datenversand", "p": "Irina Kremers", "f": 1, "t": 1}, {"c": "Marktkommunikation", "m": "EBU - Verr. Datenimport", "p": "Irina Kremers", "f": 1, "t": 1}, {"c": "Marktkommunikation", "m": "EWP", "p": "Irina Kremers", "f": 1, "t": 1}, {"c": "Billing,Output-Management", "m": "DMS - Schinnerl (Druckstraße)", "p": "Irina Kremers", "f": 3, "t": 3}, {"c": "Output-Management", "m": "Druck-Queues (PDF Printer Server)", "p": "Irina Kremers", "f": 4, "t": 5}, {"c": "Billing,Output-Management", "m": "Email Versand", "p": "Irina Kremers", "f": 5, "t": 5}, {"c": "Portale", "m": "David Portal (DAV - NB)", "p": "Irina Kremers", "f": 5, "t": 5}, {"c": "Portale", "m": "Bestandskundenportal (BKP - LF)", "p": "Irina Kremers", "f": 5, "t": 5}, {"c": "Portale", "m": "Kampagnenmanagement", "p": "Irina Kremers", "f": 5, "t": 5}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM / Vision Air", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Smartinsight", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Billing SM Konfigs", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Clearing System", "m": "Clearing alt", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Clearing System", "m": "Clearing EThrill", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "WFM/Aures", "m": "AURES", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "WFM/Aures", "m": "AURES Tablets", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Converge", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Zählereinbau", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Zählerwechsel", "p": "Irina Kremers", "f": 0, "t": 0}, {"c": "Billing", "m": "Allgemein", "p": "Nicole Wieser", "f": 4, "t": 3}, {"c": "Billing", "m": "Abrechnung", "p": "Nicole Wieser", "f": 3, "t": 2}, {"c": "Billing", "m": "AbrechnungSpotFlex", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Billing", "m": "DMSlight", "p": "Nicole Wieser", "f": 3, "t": 3}, {"c": "Billing", "m": "PDF-Verträge", "p": "Nicole Wieser", "f": 2, "t": 2}, {"c": "Billing", "m": "Produkte", "p": "Nicole Wieser", "f": 2, "t": 2}, {"c": "Billing", "m": "Rechnungsdruck", "p": "Nicole Wieser", "f": 2, "t": 2}, {"c": "Billing", "m": "FiBu Basiseinstellungen", "p": "Nicole Wieser", "f": 4, "t": 4}, {"c": "Billing", "m": "FiBu Mahnung", "p": "Nicole Wieser", "f": 3, "t": 3}, {"c": "Billing", "m": "FiBu Zahlwesen", "p": "Nicole Wieser", "f": 4, "t": 4}, {"c": "Billing", "m": "FiBu TZB", "p": "Nicole Wieser", "f": 3, "t": 2}, {"c": "Billing", "m": "Marktteilnehmer", "p": "Nicole Wieser", "f": 4, "t": 3}, {"c": "Billing", "m": "MVE", "p": "Nicole Wieser", "f": 4, "t": 3}, {"c": "Billing", "m": "Smart Meter GeräteManagement", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "Billing", "m": "StatistikAuswertungenReports", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Billing", "m": "Verwaltung", "p": "Nicole Wieser", "f": 3, "t": 3}, {"c": "Billing", "m": "XMLin & XMLout", "p": "Nicole Wieser", "f": 4, "t": 4}, {"c": "EDM", "m": "Energiegemeinschaften", "p": "Nicole Wieser", "f": 3, "t": 3}, {"c": "EDM", "m": "EDM (alt)", "p": "Nicole Wieser", "f": 3, "t": 3}, {"c": "EThrill", "m": "EThrill", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "EThrill", "m": "EThrill EW", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "EThrill", "m": "EThrill Datenversand", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "EThrill", "m": "Energiegemeinschaften", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "Handels-Systeme", "m": "ABSYS", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Handels-Systeme", "m": "EVA", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Handels-Systeme", "m": "Generis", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Marktkommunikation", "m": "Customer Processes", "p": "Nicole Wieser", "f": 5, "t": 5}, {"c": "Marktkommunikation", "m": "Datenversand", "p": "Nicole Wieser", "f": 4, "t": 3}, {"c": "Marktkommunikation", "m": "EBU - Verr. Datenimport", "p": "Nicole Wieser", "f": 5, "t": 5}, {"c": "Marktkommunikation", "m": "EWP", "p": "Nicole Wieser", "f": 5, "t": 5}, {"c": "Billing,Output-Management", "m": "DMS - Schinnerl (Druckstraße)", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "Output-Management", "m": "Druck-Queues (PDF Printer Server)", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Billing,Output-Management", "m": "Email Versand", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "Portale", "m": "David Portal (DAV - NB)", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "Portale", "m": "Bestandskundenportal (BKP - LF)", "p": "Nicole Wieser", "f": 1, "t": 1}, {"c": "Portale", "m": "Kampagnenmanagement", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM / Vision Air", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Smartinsight", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Billing SM Konfigs", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Clearing System", "m": "Clearing alt", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Clearing System", "m": "Clearing EThrill", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "WFM/Aures", "m": "AURES", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "WFM/Aures", "m": "AURES Tablets", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Converge", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Zählereinbau", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Zählerwechsel", "p": "Nicole Wieser", "f": 0, "t": 0}, {"c": "Billing", "m": "Allgemein", "p": "Matjaz Vörös", "f": 4, "t": 4}, {"c": "Billing", "m": "Abrechnung", "p": "Matjaz Vörös", "f": 3, "t": 3}, {"c": "Billing", "m": "AbrechnungSpotFlex", "p": "Matjaz Vörös", "f": 5, "t": 5}, {"c": "Billing", "m": "DMSlight", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Billing", "m": "PDF-Verträge", "p": "Matjaz Vörös", "f": 2, "t": 1}, {"c": "Billing", "m": "Produkte", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Billing", "m": "Rechnungsdruck", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "Billing", "m": "FiBu Basiseinstellungen", "p": "Matjaz Vörös", "f": 1, "t": 0}, {"c": "Billing", "m": "FiBu Mahnung", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "Billing", "m": "FiBu Zahlwesen", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "Billing", "m": "FiBu TZB", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "Billing", "m": "Marktteilnehmer", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Billing", "m": "MVE", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Billing", "m": "Smart Meter GeräteManagement", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "Billing", "m": "StatistikAuswertungenReports", "p": "Matjaz Vörös", "f": 5, "t": 5}, {"c": "Billing", "m": "Verwaltung", "p": "Matjaz Vörös", "f": 4, "t": 4}, {"c": "Billing", "m": "XMLin & XMLout", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "EDM", "m": "Energiegemeinschaften", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "EDM", "m": "EDM (alt)", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "EThrill", "m": "EThrill", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "EThrill", "m": "EThrill EW", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "EThrill", "m": "EThrill Datenversand", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "EThrill", "m": "Energiegemeinschaften", "p": "Matjaz Vörös", "f": 1, "t": 1}, {"c": "Handels-Systeme", "m": "ABSYS", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Handels-Systeme", "m": "EVA", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Handels-Systeme", "m": "Generis", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Marktkommunikation", "m": "Customer Processes", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Marktkommunikation", "m": "Datenversand", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Marktkommunikation", "m": "EBU - Verr. Datenimport", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Marktkommunikation", "m": "EWP", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Billing,Output-Management", "m": "DMS - Schinnerl (Druckstraße)", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "Output-Management", "m": "Druck-Queues (PDF Printer Server)", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Billing,Output-Management", "m": "Email Versand", "p": "Matjaz Vörös", "f": 1, "t": 2}, {"c": "Portale", "m": "David Portal (DAV - NB)", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Portale", "m": "Bestandskundenportal (BKP - LF)", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Portale", "m": "Kampagnenmanagement", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM / Vision Air", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Smartinsight", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "Billing SM Konfigs", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "Clearing System", "m": "Clearing alt", "p": "Matjaz Vörös", "f": 2, "t": 1}, {"c": "Clearing System", "m": "Clearing EThrill", "p": "Matjaz Vörös", "f": 2, "t": 2}, {"c": "WFM/Aures", "m": "AURES", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "WFM/Aures", "m": "AURES Tablets", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Converge", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Zählereinbau", "p": "Matjaz Vörös", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Zählerwechsel", "p": "Matjaz Vörös", "f": 1, "t": 1}, {"c": "Billing", "m": "Allgemein", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "Billing", "m": "Abrechnung", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Billing", "m": "AbrechnungSpotFlex", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "DMSlight", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "PDF-Verträge", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "Produkte", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "Rechnungsdruck", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "FiBu Basiseinstellungen", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "FiBu Mahnung", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "FiBu Zahlwesen", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "FiBu TZB", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "Marktteilnehmer", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Billing", "m": "MVE", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "Smart Meter GeräteManagement", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Billing", "m": "StatistikAuswertungenReports", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Billing", "m": "Verwaltung", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing", "m": "XMLin & XMLout", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "EDM", "m": "Energiegemeinschaften", "p": "Rene Hofer", "f": 3, "t": 3}, {"c": "EDM", "m": "EDM (alt)", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "EThrill", "m": "EThrill", "p": "Rene Hofer", "f": 5, "t": 5}, {"c": "EThrill", "m": "EThrill EW", "p": "Rene Hofer", "f": 5, "t": 5}, {"c": "EThrill", "m": "EThrill Datenversand", "p": "Rene Hofer", "f": 5, "t": 5}, {"c": "EThrill", "m": "Energiegemeinschaften", "p": "Rene Hofer", "f": 5, "t": 5}, {"c": "Handels-Systeme", "m": "ABSYS", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Handels-Systeme", "m": "EVA", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Handels-Systeme", "m": "Generis", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Marktkommunikation", "m": "Customer Processes", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Marktkommunikation", "m": "Datenversand", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "Marktkommunikation", "m": "EBU - Verr. Datenimport", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Marktkommunikation", "m": "EWP", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Billing,Output-Management", "m": "DMS - Schinnerl (Druckstraße)", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Output-Management", "m": "Druck-Queues (PDF Printer Server)", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Billing,Output-Management", "m": "Email Versand", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Portale", "m": "David Portal (DAV - NB)", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Portale", "m": "Bestandskundenportal (BKP - LF)", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Portale", "m": "Kampagnenmanagement", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "Smart Meter / Gerätemanagement", "m": "MDM / Vision Air", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "Smart Meter / Gerätemanagement", "m": "Smartinsight", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "Smart Meter / Gerätemanagement", "m": "Billing SM Konfigs", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "Clearing System", "m": "Clearing alt", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "Clearing System", "m": "Clearing EThrill", "p": "Rene Hofer", "f": 4, "t": 4}, {"c": "WFM/Aures", "m": "AURES", "p": "Rene Hofer", "f": 1, "t": 1}, {"c": "WFM/Aures", "m": "AURES Tablets", "p": "Rene Hofer", "f": 0, "t": 0}, {"c": "ZFA System", "m": "Converge", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "ZFA System", "m": "Zählereinbau", "p": "Rene Hofer", "f": 2, "t": 2}, {"c": "ZFA System", "m": "Zählerwechsel", "p": "Rene Hofer", "f": 2, "t": 2}]};
+const short = n => n.split(" ").pop();
+document.getElementById("subline").textContent =
+  `${D.persons.length} Applikationsmanager · ${D.modules.length} App-Module · ${D.ratings.length} Bewertungen · Stand ${D.stand}`;
+
+const key = (c,m)=>c+"|"+m;
+const by = {};
+D.ratings.forEach(r => (by[key(r.c,r.m)] ||= []).push(r));
+const clusters = []; const byCl = {};
+D.modules.forEach(a => { if(!byCl[a.c]){byCl[a.c]=[];clusters.push(a.c);} byCl[a.c].push(a); });
+const maxF = k => Math.max(0, ...(by[k]||[]).map(x=>x.f??0));
+const maxT = k => Math.max(0, ...(by[k]||[]).map(x=>x.t??0));
+const nF3 = k => (by[k]||[]).filter(x=>(x.f??0)>=3).length;
+const covPerson = {};
+D.ratings.forEach(r => { if((r.f??0)>=3) (covPerson[r.p] ||= new Set()).add(key(r.c,r.m)); });
+
+let sel = null;
+const resetBtn = document.getElementById("reset");
+const amsEl = document.getElementById("ams");
+D.persons.forEach(p => {
+  const b = document.createElement("button");
+  b.className = "person"; b.dataset.id = p;
+  b.innerHTML = `<span class="dot"></span><span class="nm">${short(p)}</span><span class="meta">${(covPerson[p]||new Set()).size} Mod.</span>`;
+  b.title = p;
+  b.onclick = () => toggle("person", p);
+  amsEl.appendChild(b);
+});
+
+const clEl = document.getElementById("clusters");
+clusters.forEach(cl => {
+  const det = document.createElement("details"); det.className="cluster"; det.open = true;
+  det.innerHTML = `<summary>${cl}<span class="cnt">${byCl[cl].length}</span></summary>`;
+  const box = document.createElement("div"); box.className = "mods";
+  byCl[cl].forEach(a => {
+    const k = key(a.c,a.m);
+    const row = document.createElement("div"); row.className="mod"; row.tabIndex=0; row.dataset.key=k;
+    row.innerHTML = `<span class="mname">${a.m}</span>
+      <span class="chip c${maxF(k)}" title="max Fachlich">F${maxF(k)}</span>
+      <span class="chip c${maxT(k)}" title="max Technisch">T${maxT(k)}</span>`;
+    row.onclick = () => toggle("app", k);
+    row.onkeydown = e => {if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle("app",k);}};
+    box.appendChild(row);
+  });
+  det.appendChild(box); clEl.appendChild(det);
+});
+
+function toggle(type, id){ sel = (sel && sel.type===type && sel.id===id) ? null : {type, id}; apply(); }
+resetBtn.onclick = () => { sel=null; apply(); };
+window.selectApp = k => { sel = {type:"app", id:k}; apply(); };
+
+function apply(){
+  resetBtn.classList.toggle("show", !!sel);
+  document.querySelectorAll(".person").forEach(el=>{
+    el.classList.toggle("active", !!sel && sel.type==="person" && sel.id===el.dataset.id);
+    el.classList.remove("dim");
+  });
+  document.querySelectorAll(".mod").forEach(el=>{
+    el.classList.toggle("active", !!sel && sel.type==="app" && sel.id===el.dataset.key);
+    el.classList.remove("dim");
+  });
+  if(sel && sel.type==="person"){
+    const set = covPerson[sel.id]||new Set();
+    document.querySelectorAll(".mod").forEach(el=>el.classList.toggle("dim", !set.has(el.dataset.key)));
+  }
+  if(sel && sel.type==="app"){
+    const ok = new Set((by[sel.id]||[]).filter(x=>(x.f??0)>=3).map(x=>x.p));
+    document.querySelectorAll(".person").forEach(el=>el.classList.toggle("dim", !ok.has(el.dataset.id)));
+  }
+  renderDetail();
+}
+
+const detEl = document.getElementById("detail");
+const tag = (n, lv) => `<span class="tag">${n}<span class="lv c${lv}">${lv}</span></span>`;
+function renderDetail(){
+  if(!sel){ detEl.innerHTML = `<div class="empty">App-Modul oder Person anklicken,<br>um die Details anzuzeigen.</div>`; return; }
+  if(sel.type==="app"){
+    const [c,m] = sel.id.split("|");
+    const meta = D.modules.find(x=>x.c===c&&x.m===m) || {};
+    const list = (by[sel.id]||[]);
+    const fs = [...list].sort((a,b)=>(b.f??0)-(a.f??0));
+    const ts = [...list].sort((a,b)=>(b.t??0)-(a.t??0));
+    const prio = meta.prio ? ` · Priorität ${meta.prio}` : "";
+    detEl.innerHTML = `<div class="dwrap"><h3>${m} <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:400;color:#9FB0BC;text-transform:uppercase;letter-spacing:.06em;margin-left:6px">${c}${prio}</span></h3><div class="dbody">
+      ${meta.besch ? `<div class="besch">${meta.besch}</div>` : ""}
+      <div class="dimbox"><h4>Fachlich — wer kennt die Logik</h4>
+        ${fs.map(x=>tag(short(x.p), x.f??0)).join("")}</div>
+      <div class="dimbox"><h4>Technisch — wer kennt die Umsetzung</h4>
+        ${ts.map(x=>tag(short(x.p), x.t??0)).join("")}</div>
+      ${nF3(sel.id)===0 ? '<div class="banner">⚠ Niemand fachlich ≥ 3 — Lücke</div>' :
+        nF3(sel.id)===1 ? '<div class="banner">⚠ Nur eine Person fachlich ≥ 3 — Klumpenrisiko</div>' : ""}
+    </div></div>`;
+  }
+  if(sel.type==="person"){
+    const mine = D.ratings.filter(x=>x.p===sel.id&&(x.f??0)>=3);
+    const grp = {}; mine.forEach(x=>(grp[x.c] ||= []).push(x));
+    let h = `<div class="dwrap"><h3>${short(sel.id)} <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:400;color:#9FB0BC;text-transform:uppercase;letter-spacing:.06em;margin-left:6px">Applikationsmanagement</span></h3><div class="dbody">
+      <p class="hint" style="margin-top:0">Deckt ${mine.length} von ${D.modules.length} App-Modulen fachlich ab (≥ 3):</p>`;
+    Object.entries(grp).forEach(([c,list])=>{
+      h += `<div style="margin-bottom:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);text-transform:uppercase;letter-spacing:.06em">${c}</span><br>` +
+        list.sort((a,b)=>(b.f??0)-(a.f??0)).map(x=>tag(x.m, x.f??0)).join("") + `</div>`;
+    });
+    detEl.innerHTML = h + "</div></div>";
+  }
+}
+renderDetail();
+
+document.getElementById("q").addEventListener("input", e=>{
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll(".mod").forEach(el=>{el.style.display = !q||el.dataset.key.toLowerCase().includes(q)?"":"none";});
+  document.querySelectorAll(".person").forEach(el=>{el.style.display = !q||el.dataset.id.toLowerCase().includes(q)?"":"none";});
+  document.querySelectorAll(".cluster").forEach(det=>{
+    const any=[...det.querySelectorAll(".mod")].some(m=>m.style.display!=="none");
+    det.style.display = any||!q ? "" : "none";});
+});
+
+// ===== Übersicht =====
+let covA=0, gaps=0, klump=0;
+let rowsH = `<table><tr><th class="modh">App-Modul</th><th>Prio</th><th>max F</th><th>≥3 F</th><th>max T</th><th>≥3 T</th><th>Ø F</th><th>Status</th></tr>`;
+clusters.forEach(cl=>{
+  rowsH += `<tr class="clrow"><td colspan="8">${cl}</td></tr>`;
+  byCl[cl].forEach(a=>{
+    const k = key(a.c,a.m), list = by[k]||[];
+    const mf = maxF(k), nf = nF3(k);
+    const mt = maxT(k), nt = list.filter(x=>(x.t??0)>=3).length;
+    const avg = list.length ? (list.reduce((s,x)=>s+(x.f??0),0)/list.length).toFixed(1) : "-";
+    if(nf>0) covA++;
+    let st;
+    if(nf===0){ gaps++; st = `<span class="status st-b">Lücke</span>`; }
+    else if(nf===1){ klump++; st = `<span class="status st-w">Klumpen</span>`; }
+    else st = `<span class="status st-ok">OK (${nf})</span>`;
+    rowsH += `<tr><td class="modc">${a.m}</td><td class="num">${a.prio||"–"}</td>
+      <td class="num c${mf}">${mf}</td><td class="num">${nf}</td>
+      <td class="num c${mt}">${mt}</td><td class="num">${nt}</td>
+      <td class="num">${avg}</td><td>${st}</td></tr>`;
+  });
+});
+document.getElementById("cov").innerHTML = rowsH + "</table>";
+document.getElementById("kpis").innerHTML = [
+  [covA+" / "+D.modules.length, "fachlich abgedeckt (≥1 AM ≥3)", ""],
+  [gaps, "Lücken", gaps?"bad":""],
+  [klump, "Klumpenrisiken", ""],
+  [(D.ratings.reduce((s,x)=>s+(x.f??0),0)/D.ratings.length).toFixed(2), "Ø Fachlich gesamt", ""],
+  [(D.ratings.reduce((s,x)=>s+(x.t??0),0)/D.ratings.length).toFixed(2), "Ø Technisch gesamt", ""],
+].map(([v,l,c])=>`<div class="kpi"><div class="v ${c}">${v}</div><div class="l">${l}</div></div>`).join("");
+
+// ===== heatmaps =====
+function heat(el, dim){
+  let h = `<table><tr><th class="modh">App-Modul</th>` +
+    D.persons.map(p=>`<th class="rot"><span>${short(p)}</span></th>`).join("") + "</tr>";
+  clusters.forEach(cl=>{
+    h += `<tr class="clrow"><td colspan="${D.persons.length+1}">${cl}</td></tr>`;
+    byCl[cl].forEach(a=>{
+      const list = by[key(a.c,a.m)]||[];
+      h += `<tr><td class="modc">${a.m}</td>` + D.persons.map(p=>{
+        const e = list.find(x=>x.p===p);
+        const v = e ? (e[dim]??0) : null;
+        return v===null ? `<td class="num" style="color:#C9CFD4">·</td>` : `<td class="num c${v}">${v}</td>`;
+      }).join("") + "</tr>";
+    });
+  });
+  document.getElementById(el).innerHTML = h + "</table>";
+}
+heat("hm-f","f"); heat("hm-t","t");
+
+// ===== Risiken =====
+const PRIOW = {"Höchste":4,"Hoch":3,"Mittel":2,"Niedrig":1,"":2};
+const risks = [];
+D.modules.forEach(a=>{
+  const k = key(a.c,a.m), nf = nF3(k);
+  if(nf>1) return;
+  const sev = nf===0 ? 3 : 1;
+  const who = (by[k]||[]).filter(x=>(x.f??0)>=3).map(x=>short(x.p));
+  risks.push({m:a.m, c:a.c, prio:a.prio, prob: nf===0?"Lücke":"Klumpen",
+    det: nf===0 ? `bester Wert: ${maxF(k)}` : `hängt an ${who[0]}`,
+    score: sev * PRIOW[a.prio||""]});
+});
+risks.sort((x,y)=>y.score-x.score);
+let rh = `<table><tr><th class="modh">App-Modul</th><th>Cluster</th><th>Priorität</th><th style="width:120px">Problem</th><th style="text-align:left">Detail</th></tr>`;
+risks.forEach(r=>{
+  rh += `<tr><td class="modc">${r.m}</td><td>${r.c}</td><td class="num">${r.prio||"–"}</td>
+    <td><span class="status ${r.prob==="Lücke"?"st-b":"st-w"}">${r.prob}</span></td><td>${r.det}</td></tr>`;
+});
+document.getElementById("risk").innerHTML = rh + "</table>";
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="sec-"+b.dataset.s));
+});
+</script>
+</body>
+</html>
